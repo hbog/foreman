@@ -1,8 +1,15 @@
 module Facets
+  SUPPORTED_CORE_OBJECTS = [:host, :hostgroup]
+
   module_function
 
   def registered_facets
     configuration.dup
+  end
+
+  def find_facet_by_class(facet_class, facet_type = :host)
+    hash = registered_facets.select { |_, facet| facet.has_configuration(facet_type) && facet.configuration_for(facet_type).model == facet_class }
+    hash.first
   end
 
   # Registers a new facet. Specify a model class for facet's data.
@@ -18,18 +25,32 @@ module Facets
   #     template_compatibility_properties :environment_id, :example_proxy_id
   #   end
   # For more detailed description of the registration methods, see <tt>Facets::Entry</tt> documentation.
-  def register(facet_model, facet_name = nil, &block)
+  def register(facet_model = nil, facet_name = nil, &block)
+    if facet_model.is_a?(Symbol) && facet_name.nil?
+      facet_name = facet_model
+      facet_model = nil
+    end
+
     entry = Facets::Entry.new(facet_model, facet_name)
 
     entry.instance_eval(&block) if block_given?
 
+    # create host configuration if no block was specified
+    entry.configure_host unless block_given?
+
     configuration[entry.name] = entry
 
-    Facets::ManagedHostExtensions.register_facet_relation(Host::Managed, entry)
+    publish_entry_created(entry)
     entry
   end
 
-  # declare private module methods.
+  # subscription method to know when a facet entry is created.
+  # The callback will receive a single parameter - the entry that was created.
+  def after_entry_created(&block)
+    entry_created_callbacks << block
+  end
+
+  #declare private module methods.
   class << self
     private
 
@@ -39,6 +60,16 @@ module Facets
 
     def entries_from_plugins
       Foreman::Plugin.all.map {|plugin| plugin.facets}.compact.flatten
+    end
+
+    def entry_created_callbacks
+      @entry_created_callbacks ||= []
+    end
+
+    def publish_entry_created(entry)
+      entry_created_callbacks.each do |callback|
+        callback.call(entry)
+      end
     end
   end
 end

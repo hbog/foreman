@@ -3,6 +3,10 @@ require 'test_helper'
 class TestFacet < HostFacets::Base
 end
 
+class TestHostgroupFacet < ActiveRecord::Base
+  include Facets::HostgroupFacet
+end
+
 module TestModule
   class ModuleTestFacet < HostFacets::Base
   end
@@ -179,6 +183,75 @@ class FacetTest < ActiveSupport::TestCase
       @host = Host::Managed.new
 
       @host.test_facet
+    end
+  end
+
+  context 'hostgroup facet behavior' do
+    test 'inherited attributes are defined by inherit_attributes class method' do
+      TestHostgroupFacet.stubs(:attributes_to_inherit).returns([])
+      TestHostgroupFacet.inherit_attributes :to_inherit
+
+      facet = TestHostgroupFacet.new
+      facet.stubs(:attributes).returns({:to_inherit => 'val1', :dont_inherit => 'val2'})
+
+      actual = facet.inherited_attributes
+
+      assert_equal({:to_inherit => 'val1'}, actual)
+    end
+  end
+
+  context 'hostgroup behavior' do
+    setup do
+      Facets.register :hostgroup_facet do
+        configure_hostgroup TestHostgroupFacet
+        configure_host TestFacet
+      end
+
+      @hostgroup = Hostgroup.new
+      @facet = @hostgroup.build_hostgroup_facet
+    end
+
+    test 'attributes inherited by default' do
+
+    end
+
+    test 'hostgroup and facet are connected two-way' do
+      assert_equal @hostgroup, @facet.hostgroup
+    end
+
+    test 'facet is inherited' do
+      skip
+      facet = TestHostgroupFacet.new
+      parent_hg = FactoryGirl.create(:hostgroup, :hostgroup_facet => facet)
+      child_hg = FactoryGirl.create(:hostgroup, :parent => parent_hg)
+
+      assert_not_nil child_hg.inherited_hostgroup_facet
+    end
+  end
+
+  context 'host and hostgroup relationship' do
+    test 'host facet is getting attributes from hostgroup facet' do
+      Facets.register :hostgroup_facet do
+        configure_host TestFacet
+        configure_hostgroup TestHostgroupFacet
+      end
+
+      host = Host::Managed.new
+      hostgroup = FactoryGirl.create(:hostgroup, :hostgroup_facet => TestHostgroupFacet.new)
+
+      TestHostgroupFacet.stubs(:attributes_to_inherit).returns([])
+      TestHostgroupFacet.inherit_attributes :to_inherit
+      TestHostgroupFacet.any_instance.stubs(:attributes).returns({:to_inherit => 'val1', :dont_inherit => 'val2'})
+
+      actual = host.apply_inherited_attributes('hostgroup' => hostgroup)
+
+      assert_equal({'to_inherit' => 'val1'}, actual['hostgroup_facet_attributes'])
+    end
+  end
+
+  context 'same facet for host and hostgroup' do
+    test 'inherits all attributes from hostgroup to host' do
+
     end
   end
 end

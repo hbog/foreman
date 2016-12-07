@@ -39,6 +39,13 @@ module Facets
     module ClassMethods
       # Change attributes that will be sent to an facet based on inherited values from the hostgroup.
       def inherited_attributes(hostgroup, facet_attributes)
+        facet_name, facet_config = Facets.find_facet_by_class(self, :host)
+
+        if facet_config.has_hostgroup_configuration?
+          # hg_facet = hostgroup.send("inherited_#{facet_name}")
+          hg_facet = hostgroup.send(facet_name)
+          facet_attributes = hg_facet.inherited_attributes.merge(facet_attributes)
+        end
         facet_attributes
       end
 
