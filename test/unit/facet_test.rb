@@ -212,20 +212,22 @@ class FacetTest < ActiveSupport::TestCase
     end
 
     test 'attributes inherited by default' do
+      grand_parent = Hostgroup.new
+      grand_parent_facet = grand_parent.build_hostgroup_facet
+      parent = Hostgroup.new
+      parent_facet = parent.build_hostgroup_facet
+      grand_parent_facet.expects(:inherited_attributes).returns(grand_only: 'grand', parent: 'grand', local: 'grand')
+      parent_facet.expects(:inherited_attributes).returns(grand_only: nil, parent: 'parent', local: 'parent')
+      @facet.expects(:inherited_attributes).returns(grand_only: nil, parent: nil, local: 'local')
 
+      @hostgroup.expects(:hostgroup_ancestry_cache).returns([grand_parent, parent])
+      actual = @hostgroup.inherited_facet_attributes(Facets.registered_facets[:hostgroup_facet])
+
+      assert_equal({grand_only: 'grand', parent: 'parent', local: 'local'}, actual)
     end
 
     test 'hostgroup and facet are connected two-way' do
       assert_equal @hostgroup, @facet.hostgroup
-    end
-
-    test 'facet is inherited' do
-      skip
-      facet = TestHostgroupFacet.new
-      parent_hg = FactoryGirl.create(:hostgroup, :hostgroup_facet => facet)
-      child_hg = FactoryGirl.create(:hostgroup, :parent => parent_hg)
-
-      assert_not_nil child_hg.inherited_hostgroup_facet
     end
   end
 
