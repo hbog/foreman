@@ -247,7 +247,6 @@ class FacetTest < ActiveSupport::TestCase
     test 'hostgroup and facet are connected two-way' do
       assert_equal @hostgroup, @facet.hostgroup
     end
-
   end
 
   context 'host and hostgroup relationship' do

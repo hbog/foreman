@@ -134,9 +134,5 @@ class FacetConfigurationTest < ActiveSupport::TestCase
         assert_equal :restrict_with_exception, facet_configuration.dependent
       end
     end
-
-    context 'hostgroup facet configuration' do
-
-    end
   end
 end
