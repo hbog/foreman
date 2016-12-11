@@ -14,7 +14,14 @@ module Facets
       end
 
       def attributes_to_inherit
-        @attributes_to_inherit ||= []
+        @attributes_to_inherit ||= begin
+          _, facet_config = Facets.find_facet_by_class(self, :hostgroup)
+          if facet_config.has_host_configuration? && facet_config.host_configuration.model == self
+            attribute_names - ['id', 'created_at', 'updated_at']
+          else
+            []
+          end
+        end
       end
     end
 

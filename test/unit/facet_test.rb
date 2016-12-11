@@ -7,6 +7,11 @@ class TestHostgroupFacet < ActiveRecord::Base
   include Facets::HostgroupFacet
 end
 
+class TestHostAndHostrgoupFacet < ActiveRecord::Base
+  include Facets::HostgroupFacet
+  include Facets::Base
+end
+
 module TestModule
   class ModuleTestFacet < HostFacets::Base
   end
@@ -198,6 +203,19 @@ class FacetTest < ActiveSupport::TestCase
 
       assert_equal({:to_inherit => 'val1'}, actual)
     end
+
+    test 'all attributes are inherited for same facet in host and hostgroup' do
+      Facets.register :same_facet do
+        configure_hostgroup TestHostAndHostrgoupFacet
+        configure_host TestHostAndHostrgoupFacet
+      end
+
+      TestHostAndHostrgoupFacet.expects(:attribute_names).returns(['id', 'created_at', 'updated_at', 'attr1', 'attr2'])
+
+      actual = TestHostAndHostrgoupFacet.attributes_to_inherit
+
+      assert_equal(['attr1', 'attr2'], actual)
+    end
   end
 
   context 'hostgroup behavior' do
@@ -229,6 +247,7 @@ class FacetTest < ActiveSupport::TestCase
     test 'hostgroup and facet are connected two-way' do
       assert_equal @hostgroup, @facet.hostgroup
     end
+
   end
 
   context 'host and hostgroup relationship' do
@@ -248,12 +267,6 @@ class FacetTest < ActiveSupport::TestCase
       actual = host.apply_inherited_attributes('hostgroup' => hostgroup)
 
       assert_equal({'to_inherit' => 'val1'}, actual['hostgroup_facet_attributes'])
-    end
-  end
-
-  context 'same facet for host and hostgroup' do
-    test 'inherits all attributes from hostgroup to host' do
-
     end
   end
 end
