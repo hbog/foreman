@@ -3,12 +3,14 @@ module Facets
 
   module_function
 
-  def registered_facets
-    configuration.dup
+  def registered_facets(facet_type = nil)
+    facets = configuration.dup
+    return facets unless facet_type
+    facets.select { |_, facet| facet.has_configuration(facet_type) }
   end
 
   def find_facet_by_class(facet_class, facet_type = :host)
-    hash = registered_facets.select { |_, facet| facet.has_configuration(facet_type) && facet.configuration_for(facet_type).model == facet_class }
+    hash = registered_facets(facet_type).select { |_, facet| facet.configuration_for(facet_type).model == facet_class }
     hash.first
   end
 

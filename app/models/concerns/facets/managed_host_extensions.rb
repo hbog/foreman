@@ -6,25 +6,10 @@ module Facets
     include Facets::ModelExtensionsBase
 
     included do
+      configure_facet(:host, :host, :host_id)
+
       Facets.after_entry_created do |entry|
-        if entry.has_host_configuration?
-          Facets::ManagedHostExtensions.register_facet_relation(Host::Managed, entry)
-        end
-        hash
-      end
-    end
-
-    class << self
-      def base_model_id_field
-        :host_id
-      end
-
-      def base_model_symbol
-        :host
-      end
-
-      def facet_type
-        :host
+        register_facet_relation(entry) if entry.has_host_configuration?
       end
     end
 

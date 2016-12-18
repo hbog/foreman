@@ -27,6 +27,14 @@ class FacetTest < ActiveSupport::TestCase
     Host::Managed.cloned_parameters[:include].delete(:test_model)
     Host::Managed.cloned_parameters[:include].delete(:test_facet)
     Host::Managed.cloned_parameters[:include].delete(:namespaced_facet)
+    Host::Managed.cloned_parameters[:include].delete(:hostgroup_facet)
+    Host::Managed.cloned_parameters[:include].delete(:same_facet)
+
+    Hostgroup.cloned_parameters[:include].delete(:test_model)
+    Hostgroup.cloned_parameters[:include].delete(:test_facet)
+    Hostgroup.cloned_parameters[:include].delete(:namespaced_facet)
+    Hostgroup.cloned_parameters[:include].delete(:hostgroup_facet)
+    Hostgroup.cloned_parameters[:include].delete(:same_facet)
   end
 
   context 'namespaced facets' do

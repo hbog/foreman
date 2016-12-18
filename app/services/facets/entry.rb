@@ -45,7 +45,14 @@ module Facets
     end
 
     def has_configuration(config_type)
-      configuration_entries.key?(config_type)
+      if config_type.is_a? Array
+        config_type.each do |config_type_instance|
+          return true if configuration_entries.key?(config_type_instance)
+        end
+        false
+      else
+        configuration_entries.key?(config_type)
+      end
     end
 
     def configuration_for(config_type)
