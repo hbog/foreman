@@ -63,7 +63,7 @@ class FacetConfigurationTest < ActiveSupport::TestCase
         end
         facet_configuration = Facets.registered_facets[:test_model]
         assert_equal :test_model, facet_configuration.name
-        assert_equal TestClass, facet_configuration.model
+        assert_equal TestFacet, facet_configuration.model
         assert_equal TestHelper, facet_configuration.helper
         assert_equal TestExtension, facet_configuration.extension
         assert_equal 'single_view', facet_configuration.api_single_view
@@ -121,7 +121,7 @@ class FacetConfigurationTest < ActiveSupport::TestCase
         end
 
         facet_configuration = Facets.registered_facets[:test_model].host_configuration
-        assert_equal TestClass, facet_configuration.model
+        assert_equal TestFacet, facet_configuration.model
         assert_equal TestHelper, facet_configuration.helper
         assert_equal TestExtension, facet_configuration.extension
         assert_equal 'single_view', facet_configuration.api_single_view

@@ -265,7 +265,7 @@ class FacetTest < ActiveSupport::TestCase
       end
 
       host = Host::Managed.new
-      hostgroup = FactoryGirl.create(:hostgroup, :hostgroup_facet => TestHostgroupFacet.new)
+      hostgroup = FactoryBot.create(:hostgroup, :hostgroup_facet => TestHostgroupFacet.new)
 
       TestHostgroupFacet.stubs(:attributes_to_inherit).returns([])
       TestHostgroupFacet.inherit_attributes :to_inherit

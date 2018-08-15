@@ -49,23 +49,27 @@ module Facets
           extend_model(type_config, facet_name)
           handle_migrations(type_config, facet_name)
 
-          extension_config.callback.call(facet_config) if extension_config.callback
+          extension_config.callback&.call(facet_config)
         end
       end
 
       def handle_migrations(type_config, facet_name)
-        return unless Foreman.in_rake?("db:migrate")
+        return unless Foreman.in_setup_db_rake?
         # To prevent running into issues in old migrations when new facet is defined but not migrated yet.
         # We define it only when in migration to avoid this unnecessary checks outside for the migration
-        define_method("#{facet_name}_with_migration_check") do
-          if type_config.model.table_exists?
-            send("#{facet_name}_without_migration_check")
-          else
-            logger.warn("Table for #{facet_name} not defined yet: skipping the facet data")
-            nil
+        @facet_relation_db_migrate_extensions ||= {} # prevent duplicates
+        return if @facet_relation_db_migrate_extensions.key?(facet_config.name)
+        @facet_relation_db_migrate_extensions[facet_name] = Module.new do
+          define_method(facet_name) do
+            if type_config.model.table_exists?
+              super()
+            else
+              logger.warn("Table for #{facet_name} not defined yet: skipping the facet data")
+              nil
+            end
           end
         end
-        alias_method_chain facet_name, :migration_check
+        prepend @facet_relation_db_migrate_extensions[facet_name]
       end
 
       def extend_model(type_config, facet_name)
@@ -81,7 +85,11 @@ module Facets
       end
 
       def extend_model_attributes(type_config, facet_name, extension_config)
-        has_one facet_name, :class_name => type_config.model.name, :foreign_key => extension_config.base_model_id_field, :inverse_of => extension_config.base_model_symbol
+        has_one facet_name,
+          :class_name => type_config.model.name,
+          :foreign_key => extension_config.base_model_id_field,
+          :inverse_of => extension_config.base_model_symbol,
+          :dependent => type_config.dependent
         accepts_nested_attributes_for facet_name, :update_only => true, :reject_if => :all_blank
 
         alias_method "#{facet_name}_attributes", facet_name

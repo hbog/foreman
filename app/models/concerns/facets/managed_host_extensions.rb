@@ -13,10 +13,6 @@ module Facets
       end
     end
 
-    def facets
-      facets_with_definitions.keys
-    end
-
     # This method will return a hash of facets for a specific host including the coresponding definitions.
     # The output should look like this:
     # { host.puppet_aspect => Facets.registered_facets[:puppet_aspect] }
@@ -46,6 +42,5 @@ module Facets
         facet_config.model.populate_fields_from_facts(self, parser, type, source_proxy)
       end
     end
-
   end
 end
