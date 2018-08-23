@@ -1,9 +1,11 @@
 class FactParser
   delegate :logger, :to => :Rails
-  VIRTUAL = /\A([a-z0-9]+)_([a-z0-9]+)\Z/
+  VIRTUAL = /\A([a-z0-9]+)_([a-z0-9]+)\Z/     # facter < v3.0
+  ALIASES = /\A([a-z0-9\.]+):([a-z0-9]+)\Z/
+  VLANS = /\A([a-z0-9]+)\.([0-9]+)\Z/
   BRIDGES = /\A(vir)?br\d+(_nic)?\Z/
-  BONDS = /\A(bond\d+)\Z|\A(lagg\d+)\Z/
-  VIRTUAL_NAMES = /#{VIRTUAL}|#{BRIDGES}|#{BONDS}/
+  BONDS = /(bond\d+)\Z|(lagg\d+)\Z/
+  VIRTUAL_NAMES = /#{ALIASES}|#{VLANS}|#{VIRTUAL}|#{BRIDGES}|#{BONDS}/
 
   def self.parser_for(type)
     parsers[type.to_s] || parsers[:puppet]
@@ -127,14 +129,21 @@ class FactParser
       attributes[:virtual] = true
       if $1.nil? && name =~ BRIDGES
         attributes[:bridge] = true
-      else
+      elsif name =~ ALIASES
         attributes[:attached_to] = $1
-
-        if @facts[:vlans].present?
-          vlans = @facts[:vlans].split(',')
-          tag = name.split('_').last
-          attributes[:tag] = vlans.include?(tag) ? tag : ''
-        end
+        attributes[:tag] = ''
+      elsif name =~ VLANS
+        attributes[:attached_to] = $1
+        attributes[:tag] = $2
+      elsif name =~ VIRTUAL
+          # Legacy: facter < v3.0
+          # vlans fact has been reomved in facter 3.0
+          attributes[:attached_to] = $1
+          tag = $2
+          if @facts[:vlans].present?
+              vlans = @facts[:vlans].split(',')
+              attributes[:tag] = vlans.include?(tag) ? tag : ''
+          end
       end
     else
       attributes[:virtual] = false
